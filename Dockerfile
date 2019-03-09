@@ -14,6 +14,8 @@ RUN set -ex \
         curl \
         flex \
         libssl-dev \
+        python \
+        unzip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/*
 
@@ -21,9 +23,9 @@ RUN set -ex \
 RUN set -ex \
     && mkdir /linux-build \
     && cd /linux-build \
-    && curl -LO https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.0.tar.xz \
-    && tar xf linux-5.0.tar.xz \
-    && rm linux-5.0.tar.xz
+    && curl -LO https://github.com/nuumio/linux-kernel/archive/nuumio-4.4-pcie-scan-sleep-01.zip \
+    && unzip nuumio-4.4-pcie-scan-sleep-01.zip \
+    && rm nuumio-4.4-pcie-scan-sleep-01.zip
 VOLUME /linux-build
 
 # Entry point and stuff
