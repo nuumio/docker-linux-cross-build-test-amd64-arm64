@@ -4,7 +4,7 @@
 
 The worst that has happened to me so far is **root filesystem corruption** that required manual fixing of it with `fsck` to make the system bootable again. If you have no idea what I'm talking about here it's better you don't even try running this.
 
-I've only tested this in Ubuntu 18.04 running natively and as a guest in VirtualBox (Win10 host).
+I've only tested this in Ubuntu 18.04 running natively and as a guest in VirtualBox (Win10 host, 8 cores, 16 GB memory).
 
 
 # How to run in Docker
@@ -176,7 +176,7 @@ or:
 
 # What goes wrong when running in VM
 
-In my system, when running in a VirtualBox VM, builds start to fail. Usually they fail either with `UnicodeEncodeError` from `gcc-wrapper.py` or with `Segmentation fault` and first fails usually happen in less than 15 minutes. If you inpect build logs from each round (`build-log-NNN.txt`) you may see something like this:
+In my system, when running in a VirtualBox VM (Win10 host, 8 cores, 16 GB memory), builds start to fail randomly. Usually they fail either with `UnicodeEncodeError` from `gcc-wrapper.py` or with `Segmentation fault` and first fails usually happen in less than 45 minutes. Sometimes it may take really long time and sometimes it may happen on the first round. If you inspect build logs from each round (`build-log-NNN.txt`) you may see something like this:
 
     Traceback (most recent call last):
         File "./scripts/gcc-wrapper.py", line 115, in <module>
