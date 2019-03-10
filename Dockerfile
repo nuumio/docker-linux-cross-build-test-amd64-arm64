@@ -1,5 +1,6 @@
 FROM ubuntu:bionic
-MAINTAINER Jari Hämäläinen <nuum.io.fi@gmail.com> (https://github.com/nuumio)
+LABEL author="Jari Hämäläinen <nuum.io.fi@gmail.com>"
+LABEL homepage="https://github.com/nuumio/docker-linux-cross-build-test-amd64-arm64"
 
 # Install tools
 RUN set -ex \
@@ -19,14 +20,21 @@ RUN set -ex \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/*
 
+# Default image environment
+ENV KERNELVERSION nuumio-4.4-pcie-scan-sleep-01
+ENV KERNELNAME linux-kernel
+ENV BUILDDIR /linux-build
+ENV LINUXDIR ${BUILDDIR}/${KERNELNAME}-${KERNELVERSION}
+ENV LOGDIR ${BUILDDIR}/logs
+
 # Get Linux source and make a volume out of build dir
 RUN set -ex \
-    && mkdir /linux-build \
-    && cd /linux-build \
-    && curl -LO https://github.com/nuumio/linux-kernel/archive/nuumio-4.4-pcie-scan-sleep-01.zip \
-    && unzip nuumio-4.4-pcie-scan-sleep-01.zip \
-    && rm nuumio-4.4-pcie-scan-sleep-01.zip
-VOLUME /linux-build
+    && mkdir ${BUILDDIR} \
+    && cd ${BUILDDIR} \
+    && curl -LO https://github.com/nuumio/linux-kernel/archive/${KERNELVERSION}.zip \
+    && unzip ${KERNELVERSION}.zip \
+    && rm ${KERNELVERSION}.zip
+VOLUME ${BUILDDIR}
 
 # Entry point and stuff
 ADD provisioning/build-loop.sh /usr/local/bin/build-loop.sh
