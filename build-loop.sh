@@ -59,18 +59,21 @@ for I in $(seq ${ROUNDS}); do
     RSTR="$(printf "Round %3d / %3d" ${I} ${ROUNDS})"
     RFILE="$(printf "%03d" ${I})"
     log "${RSTR} start"
+    LOGFILE="${LOGDIR}/build-log-${RFILE}.txt"
 
-    runit 2>&1 | tee ${LOGDIR}/build-log-${RFILE}.txt
+    runit 2>&1 | tee ${LOGFILE}
     if [[ "${PIPESTATUS[0]}" -eq 0 ]]; then
         RES="$(echo "${RSTR} OK    ")"
         OK=$((OK+1))
+        LOGINFO=""
     else
         RES="$(echo "${RSTR} FAIL  ")"
         FAIL=$((FAIL+1))
+        LOGINFO=", log: ${LOGFILE}"
     fi
 
     STROK="$(printf "%3d" ${OK})"
     STRFAIL="$(printf "%3d" ${FAIL})"
-    log "$(echo "${RES} Stats: ok = ${STROK}, fail = ${STRFAIL}")"
+    log "$(echo "${RES} Stats: ok = ${STROK}, fail = ${STRFAIL}${LOGINFO}")"
 done
 
