@@ -36,8 +36,8 @@ RUN set -ex \
     && rm ${KERNELVERSION}.zip
 VOLUME ${BUILDDIR}
 
-# Entry point and stuff
-ADD provisioning/build-loop.sh /usr/local/bin/build-loop.sh
+# Add build loop itself
+ADD build-loop.sh /usr/local/bin/build-loop.sh
 RUN chmod +x /usr/local/bin/build-loop.sh
 CMD ["/usr/local/bin/build-loop.sh"]
 
