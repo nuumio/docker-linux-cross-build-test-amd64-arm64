@@ -17,17 +17,15 @@ if ! ${IS_DOCKER}; then
     KERNELDIR=${KERNELNAME}-${KERNELVERSION}
     if [ -d ${KERNELDIR} ] && [ -f ${KERNELDIR}/Kconfig ] && [ -f ${KERNELDIR}/Makefile ]; then
         LINUXDIR=${PWD}/${KERNELDIR}
-        LOGDIR=${LINUXDIR}/build-logs
     elif [ -f Kconfig ] && [ -f Makefile ]; then
         LINUXDIR=${PWD}
-        LOGDIR=${LINUXDIR}/build-logs
     else
         echo "Downloading kernel source"
         curl -LO https://github.com/nuumio/linux-kernel/archive/${KERNELVERSION}.zip
         unzip ${KERNELVERSION}.zip
         LINUXDIR=${PWD}/${KERNELDIR}
-        LOGDIR=${LINUXDIR}/build-logs
     fi
+    LOGDIR=${PWD}/build-logs
     mkdir -p ${LOGDIR}
 fi
 
