@@ -2,9 +2,9 @@
 
 **This test may corrupt or delete your data and render your system useless!** Run it at your own risk!
 
-The worst that has happened to me so far is **root filesystem corruption** that required manual fixing of it with `fsck` to make the system bootable again. If you have no idea what I'm talking about here it's better you don't even try running this.
+The worst that has happened to me so far is virtual machine's **root filesystem corruption** that required manual fixing of it with `fsck` to make the system bootable again. If you have no idea what I'm talking about here it's better you don't even try running this.
 
-I've only tested this in Ubuntu 18.04 running natively and as a guest in VirtualBox (Win10 host, 8 cores, 16 GB memory).
+I've only tested this in Ubuntu 18.04 running natively and as a guest in VirtualBox (Win10 host; 8 cores, 16 GB memory for VM).
 
 
 # How to run in Docker
@@ -22,7 +22,7 @@ To stop the loop keep hitting ctrl-c or run:
     $ docker container stop xbuild-loop
 
 
-# How to run without Docker
+# How to run without Docker using the script directly
 
 If you don't have Docker installed and don't want to install it you can install needed tools and run the build loop script:
 
@@ -44,8 +44,32 @@ To see how the loop is going you can `tail` its log:
 
 To stop the loop keep hitting ctrl-c.
 
+# How to use RAM disk with the script
 
-# How to run in terminal without the script
+To run using a RAM disk (like kill-ryzen script did) create and cd to a new working dir like this after getting the source and before running `build-loop.sh`. Here's a full list of commands:
+
+    # Install few tools
+    $ sudo apt install bc bison build-essential \
+        crossbuild-essential-arm64 curl flex git \
+        libssl-dev python unzip
+
+    # Create and cd to suitable working dir
+    $ mkdir -p /tmp/build-test && cd /tmp/build-test
+
+    # Get the source
+    $ git clone https://github.com/nuumio/xbuild-loop.git
+
+    # Create RAM disk and new working dirk. Then run.
+    $ sudo xbuild-loop/mkramdisk.sh && cd /mnt/ramdisk-build-test/build-test
+    $ /tmp/build-test/xbuild-loop/build-loop.sh
+
+    # Tail loop log in another terminal
+    $ tail -f /mnt/ramdisk-build-test/build-test/build-logs/build-loop.txt
+
+**NOTE:** RAM disk seems to be a real Achilles’ heel for my system. I did four runs with RAM disk and two of them caused system to freeze under two minutes, one took about five minutes and one lasted almost ten minutes.
+
+
+# How to run without the script
 
 Install tools as above and then:
 
@@ -69,14 +93,16 @@ You may want to `tail` syslog in one terminal to see if there's anything strange
 
     $ tail -f /var/log/syslog
 
-And in another terminal run `top` to see system load, IO wait and stuff:
+And in another terminal run `top` to see system load, IO wait (wa) and stuff:
 
     $ top
+
+You may want to observe things also over SSH because sometimes display may freeze but SSH connection still gets data. Every now and then disk cache flushing freezes too so syslog is not written to media, but `tail` over SSH may catch something if you want to see what happened.
 
 
 # What goes wrong when running natively
 
-When running the test natively in Ubuntu 18.04 builds seem to success but the system itself becomes "sluggish" and finally halts totally. The first sign seems to be extremely high IO wait (wa) in `top`:
+When running the test natively in Ubuntu 18.04 builds seem to succeed but the system itself becomes "sluggish" and finally freezes totally. The first sign seems to be extremely high IO wait (wa) in `top`:
 
     top - 17:12:39 up 18 min,  1 user,  load average: 24,33, 20,60, 11,72
     Tasks: 445 total,   1 running, 341 sleeping,   0 stopped,   0 zombie
@@ -84,17 +110,22 @@ When running the test natively in Ubuntu 18.04 builds seem to success but the sy
     KiB Mem : 32931556 total, 26069564 free,  1256644 used,  5605348 buff/cache
     KiB Swap:  2097148 total,  2097148 free,        0 used. 31173936 avail Mem
 
-      PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
-        8 root      20   0       0      0      0 I   0,3  0,0   0:00.80 rcu_sched
-       58 root      20   0       0      0      0 S   0,3  0,0   0:00.53 ksoftirqd/8
-      493 root      20   0       0      0      0 I   0,3  0,0   0:00.58 kworker/2:2
-     1816 root      20   0  531356  85296  67420 S   0,3  0,3   0:42.45 Xorg
-     1900 root     -51   0       0      0      0 S   0,3  0,0   0:20.70 irq/97-nvidia
-     3953 nuumio    20   0  809984  39748  27388 S   0,3  0,1   0:17.36 gnome-terminal-
-     7199 root      20   0   23324   7460   4056 S   0,3  0,0   0:00.01 python
-    28867 nuumio    20   0   54892   4740   3672 R   0,3  0,0   0:02.06 top
+During that there's nothing going on in `iotop` except waiting:
 
-High IO wait can happen at any time and it lasts for few seconds. After that everything goes fine for some time until it happens again. When running the loop long enough (usually 15-30 minutes is enough) HARD or SOFT CPU lockups happen and system gets totally stuck. Forced reset is the only way to recover. Lockups look like this in `syslog` or `dmesg`:
+    Total DISK READ :       0.00 B/s | Total DISK WRITE :       0.00 B/s
+    Actual DISK READ:       0.00 B/s | Actual DISK WRITE:       0.00 B/s
+      TID  PRIO  USER     DISK READ  DISK WRITE  SWAPIN     IO>    COMMAND
+    25355 be/4 root        0.00 B/s    0.00 B/s  0.00 % 99.99 % aarch64-linux-gnu-gcc -Wp,-MD,drivers/net/wireless/rockchip_wlan~ivers/net/wireless/rockchip_wlan/rtl8723bu/os_dep/osdep_service.c
+    24998 be/4 root        0.00 B/s    0.00 B/s  0.00 % 99.99 % aarch64-linux-gnu-gcc -Wp,-MD,drivers/usb/host/.xhci.o.d -nostdi~R(xhci_hcd) -c -o drivers/usb/host/xhci.o drivers/usb/host/xhci.c
+    25520 be/4 root        0.00 B/s    0.00 B/s  0.00 % 99.99 % aarch64-linux-gnu-gcc -Wp,-MD,drivers/usb/serial/.bus.o.d -nostd~sbserial) -c -o drivers/usb/serial/bus.o drivers/usb/serial/bus.c
+        1 be/4 root        0.00 B/s    0.00 B/s  0.00 %  0.00 % init splash
+        2 be/4 root        0.00 B/s    0.00 B/s  0.00 %  0.00 % [kthreadd]
+
+High IO wait can happen at any time and it lasts for few seconds. After that everything goes fine for some time until it happens again. When running the loop long enough (usually 15-30 minutes is enough) HARD or SOFT CPU lockups happen and system gets totally stuck. Sometimes it happens within only few minutes. Forced reset is the only way to recover.
+
+When using RAM disk system seems to freeze really quickly. During four test runs with RAM disk it never too more than 10 minutes before total system freeze for me.
+
+Lockups look like this in `syslog` or `dmesg`:
 
     [ 1931.793611] INFO: rcu_sched detected stalls on CPUs/tasks:
     [ 1931.793621]  2-...0: (1 GPs behind) idle=ee6/140000000000000/0 softirq=643232/643237 fqs=7226
@@ -221,10 +252,23 @@ OSes and software:
   * Ubuntu 18.04, kernel 4.15.0-46-generic (both native and VM guest)
   * Win 10 Pro, Version 1803 (OS Build 17134.590) (VM host)
   * VirtualBox, VirtualBox: Version 5.2.26 r128414 (Qt5.6.2)
+  * GCC 5 (Ubuntu 5.5.0-12ubuntu1) and GCC 7 (Ubuntu 7.3.0-27ubuntu1~18.04). I used GCC 7 for most of the time.
 
-Setup: C6H BIOS has been first set to defaults and then memory speed has been set to 2933 MHz. Win 10 installed to 500 GB 850 EVO, Linux VM image in 1TB 850 EVO, native Linux in WD Green.
+Setup 1: C6H BIOS has been first set to defaults, then DOCP 3200MHz profile has been set and finally memory speed has been set to 2933 MHz. Win 10 installed to 500 GB 850 EVO, Linux VM image in 1TB 850 EVO, native Linux in WD Green.
+
+Setup 2: All BIOS setting to default. Happens with these settings too on my system.
+
+Setup 3: All BIOS setting to default, SoC voltage to 1.1V and DRAM voltage to 1.35V. Happens with these settings too on my system.
 
 
 # Other notes
 
 I selected the specific version of Linux (4.4) kernel and arm64 cross-compile because it was giving me the most trouble. Building mainline kernel for x86_64 fails too - just not as easily. This is at least how it feels.
+
+Running build loop with 16 jobs in native Linux doesn't help (default = 24 jobs).
+
+The good old kill-ryzen.sh segfaults caused within seconds when run in VM. In native Linux build failed with error (probably build setup related).
+
+Compiling with GCC 5 didn't help (default GCC 7).
+
+2h run with 8 jobs went ok in native linux. Didn't bother waiting any longer.
