@@ -17,6 +17,10 @@ To see how the loop is going you can `tail` its log:
 
     $ docker exec xbuild-loop tail -f /linux-build/logs/build-loop.txt
 
+To inspect a log from a build (get file path of failed builds from build-loop.txt above):
+
+    $ docker exec -it xbuild-loop less /linux-build/logs/build-log-001.txt
+
 To stop the loop keep hitting ctrl-c or run:
 
     $ docker container stop xbuild-loop

@@ -14,6 +14,7 @@ RUN set -ex \
         crossbuild-essential-arm64 \
         curl \
         flex \
+        less \
         libssl-dev \
         python \
         unzip \
